@@ -1,0 +1,51 @@
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(gridExtra)
+library(grid)
+library(gridBase)
+
+co <- read.csv("co2.csv") #In-situ CO2 data from "http://scrippsco2.ucsd.edu/data/atmospheric_co2/primary_mlo_co2_record" 
+                          #Only columns 9 & 10 have been included, as they are the same data from previous columns,
+                          #but with missing data being filled.
+head(co)
+
+c1 <- co %>%
+      mutate( Date = ymd(paste(Yr,"/", Mn,"/15")),
+              Year = as.numeric(decimal_date(Date)),
+              CO2 = Adjusted)    %>%
+     select(Year, Date, CO2)
+head(c1)
+
+options(repr.plot.width=9, repr.plot.height=9)
+p1 <- ggplot(d2, aes(x=Year, y=CO2)) + geom_line(col="#378ccc") + stat_smooth(method="lm", se=FALSE, col="#f17e23") + labs(
+    title = "Annual Atmospheric CO2 (ppm)") + theme(panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(), 
+            axis.line = element_line(colour = "black") + theme_grey(base_size = 7) )
+p1
+
+temp <- read.csv("temp1.csv") #Global mean temperature data (specifically Global-mean monthly, seasonal, and annual means)
+                              #Data pulled from (https://data.giss.nasa.gov/gistemp/)
+head(temp)
+
+options(repr.plot.width=9, repr.plot.height=9
+       )
+p2 <- ggplot(data = temp, aes(x = Year, y = Temperature, group = Temperature)) +
+  geom_line(aes(color = Temperature, alpha = 1), size = 0.5) +
+  geom_point(aes(color = Temperature, alpha = 1), size = 3) +
+  labs(
+    title = "Global Monthly-Annual Mean Temperature (C)") + theme(panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(), 
+            axis.line = element_line(colour = "black") + theme_grey(base_size = 7))
+p2
+
+
+grid.arrange(p1, p2, ncol=1)
+
+g <- arrangeGrob(p1, p2, ncol=1)
+g
+ggsave(file="w.pdf", g, width = 183, height = 183, units = c("mm"), dpi = 400, limitsize = TRUE)
+
